@@ -278,7 +278,12 @@ public class CommandPaletteWidget extends ControlWidget implements GameContextLi
     btn.setOnTouchListener(
         new OnTouchListener() {
           private final int mTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
-          private final int mTapTimeout = ViewConfiguration.getTapTimeout();
+          // Press-fire is conceptually a long-press, so gate it on the long-press
+          // threshold rather than the much shorter tap timeout. With the short tap
+          // timeout, the time-based fire could beat the distance-based scroll
+          // detection (button slop / parent ScrollView interception) during the
+          // natural dwell before a slow scroll, accidentally actuating the command.
+          private final int mPressFireTimeout = ViewConfiguration.getLongPressTimeout();
           private float mStartX, mStartY;
           private boolean mTracking = false;
           private boolean mFired = false;
@@ -321,7 +326,7 @@ public class CommandPaletteWidget extends ControlWidget implements GameContextLi
                         }
                       }
                     };
-                btn.postDelayed(mPendingRunnable, mTapTimeout);
+                btn.postDelayed(mPendingRunnable, mPressFireTimeout);
                 return true;
 
               case MotionEvent.ACTION_MOVE:
